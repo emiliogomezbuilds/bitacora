@@ -52,11 +52,19 @@ export async function simulateAllPings(associationId: string) {
     .eq("association_id", associationId);
   if (error) throw error;
 
-  // 90% of units ping normally (small jitter near the association's center).
-  // The rest are deliberately skipped this round so the dashboard has a real
-  // "sin señal" example to show, instead of a demo that always looks perfect.
-  const pings = (units ?? [])
-    .filter(() => Math.random() > 0.1)
+  // Most units ping normally (small jitter near the association's center).
+  // Bug found during the mechanical test pass: this used to skip each unit
+  // independently at a 10% chance, which meant a round could easily ping
+  // every unit clean (as happened live: 12/12 "en cumplimiento", 0 skipped —
+  // about a 1-in-4 chance with only 12 units). That silently broke the
+  // dashboard's whole point of always having a real gap to show. Fixed by
+  // guaranteeing at least one unit is skipped per round whenever there's
+  // more than one unit, so "sin datos aún" (and eventually "sin señal") is
+  // never left to chance.
+  const all = units ?? [];
+  const guaranteedSkipId = all.length > 1 ? all[Math.floor(Math.random() * all.length)].id : null;
+  const pings = all
+    .filter((u) => u.id !== guaranteedSkipId && Math.random() > 0.1)
     .map((u) => ({
       unit_id: u.id,
       lat: CENTER.lat + (Math.random() - 0.5) * 0.02,
