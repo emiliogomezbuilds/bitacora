@@ -7,6 +7,7 @@ import CoverageMapClient from "@/components/coverage-map-client";
 import { ensureAssociationAndUnits } from "./actions";
 import { statusForUnit, statusLabel, statusBadgeVariant, coverageSummary } from "@/lib/status";
 import { SimulateButton } from "./simulate-button";
+import { ExportButton } from "./export-button";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -76,7 +77,10 @@ export default async function DashboardPage() {
               {summary.unseen > 0 ? ` · ${summary.unseen} sin datos aún` : ""}
             </p>
           </div>
-          <SimulateButton associationId={associationId} />
+          <div className="flex gap-3">
+            <ExportButton associationName={association?.name ?? "asociacion"} rows={rows} />
+            <SimulateButton associationId={associationId} />
+          </div>
         </div>
 
         <div className="mb-6">
